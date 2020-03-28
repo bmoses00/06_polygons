@@ -1,0 +1,9 @@
+torus
+200 200 0 25 150
+ident
+rotate
+x 30
+rotate
+y 30
+apply
+display
