@@ -94,12 +94,13 @@ void parse_file ( char * filename,
     double xvals[4];
     double yvals[4];
     double zvals[4];
+    int colors[3];
     struct matrix *tmp;
     double r, r1;
     double theta;
     char axis;
     int type;
-    int steps_3d = 20;
+    int steps_3d = 13;
     int steps_2d = 100;
 
     if ( strncmp(line, "box", strlen(line)) == 0 ) {
@@ -221,6 +222,20 @@ void parse_file ( char * filename,
     else if ( strncmp(line, "clear", strlen(line)) == 0 ) {
       //printf("clear\t%s", line);
       edges->lastcol = 0;
+      polygons->lastcol = 0;
+    }//end clear
+
+    else if ( strncmp(line, "color", strlen(line)) == 0 ) {
+      //printf("clear\t%s", color);
+      fgets(line, sizeof(line), f);
+
+      sscanf(line, "%d %d %d",
+             colors, colors + 1, colors + 2);
+
+      printf("%d %d %d\n", colors[0], colors[1], colors[2]);
+      c.red = colors[0];
+      c.green = colors[1];
+      c.blue = colors[2];
     }//end clear
 
     else if ( strncmp(line, "ident", strlen(line)) == 0 ) {
@@ -234,9 +249,17 @@ void parse_file ( char * filename,
       matrix_mult(transform, polygons);
     }//end apply
 
+    else if ( strncmp(line, "draw", strlen(line)) == 0 ) {
+      //printf("DISPLAY\t%s", line);
+      // clear_screen(s);
+      draw_lines(edges, s, c);
+      draw_polygons(polygons, s, c);
+      // display( s );
+    }//end display
+
     else if ( strncmp(line, "display", strlen(line)) == 0 ) {
       //printf("DISPLAY\t%s", line);
-      clear_screen(s);
+      // clear_screen(s);
       draw_lines(edges, s, c);
       draw_polygons(polygons, s, c);
       display( s );
