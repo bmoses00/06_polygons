@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "ml6.h"
+#include "gmath.h"
 
 
 //polygon organization

@@ -6,6 +6,7 @@
 #include "draw.h"
 #include "matrix.h"
 #include "math.h"
+#include "gmath.h"
 
 
 /*======== void add_polygon() ==========
@@ -44,45 +45,20 @@ void add_polygon( struct matrix *polygons,
   lines connecting each points to create bounding triangles
   ====================*/
 void draw_polygons( struct matrix *polygons, screen s, color c ) {
-  int i, x0, y0, z0,
-         x1, y1, z1,
-         x2, y2, z2,
-         ax, ay, az,
-         bx, by, bz,
-         nx, ny, nz;
+
+  double *n;
+  double v[3];
+
+  v[0] = 0;
+  v[1] = 0;
+  v[2] = 1;
+
+  int i;
   for (i=0; i  <  polygons->lastcol - 2; i+=3) {
 
-    x0 = polygons->m[0][i+0];
-    y0 = polygons->m[1][i+0];
-    z0 = polygons->m[2][i+0];
+    n = calculate_normal(polygons, i);
 
-    x1 = polygons->m[0][i+1];
-    y1 = polygons->m[1][i+1];
-    z1 = polygons->m[2][i+1];
-
-    x2 = polygons->m[0][i+2];
-    y2 = polygons->m[1][i+2];
-    z2 = polygons->m[2][i+2];
-
-    ax = x1 - x0;
-    ay = y1 - y0;
-    az = z1 - z0;
-
-    bx = x2 - x0;
-    by = y2 - y0;
-    bz = z2 - z0;
-
-    // nx = ay*bz - az*by;
-    // ny = az*bx - ax*bz;
-    nz = ax*by - ay*bx;
-
-
-    // printf("%d %d %d\n", x0, y0, z0);
-    // printf("%d %d %d\n", x1, y1, z1);
-    // printf("%d %d %d\n", x2, y2, z2);
-
-
-    if (nz > 0) {
+    if (dot_product(n, v) > 0.01) {
       draw_line(polygons->m[0][i+0], polygons->m[1][i+0],
                 polygons->m[0][i+1], polygons->m[1][i+1], s, c);
 
@@ -173,24 +149,49 @@ void add_sphere( struct matrix * edges,
   latStop = steps;
   longStart = 0;
   longStop = steps;
-
+  printf("steps: %d\n", steps);
   for ( lat = latStart; lat <= steps; lat++ ) {
     for ( longt = longStart; longt < longStop; longt++ ) {
 
       index = lat * (steps) + longt;
 
-      add_polygon(edges, points->m[0][index + steps + 1],
-                         points->m[1][index + steps + 1],
-                         points->m[2][index + steps + 1],
-                         points->m[0][index],
-                         points->m[1][index],
-                         points->m[2][index],
-                         points->m[0][index + 1],
-                         points->m[1][index + 1],
-                         points->m[2][index + 1]);
+        add_polygon(edges, points->m[0][index + steps + 1],
+                           points->m[1][index + steps + 1],
+                           points->m[2][index + steps + 1],
+                           points->m[0][index],
+                           points->m[1][index],
+                           points->m[2][index],
+                           points->m[0][index + 1],
+                           points->m[1][index + 1],
+                           points->m[2][index + 1]);
 
-     if (longt != 0)
-       add_polygon(edges, points->m[0][index + steps + 1],
+     // because I made this loop < and the generate one <=, the != is 'staggered' by 1
+     if (longt != lat - 1)
+         add_polygon(edges, points->m[0][index + steps + 1],
+                            points->m[1][index + steps + 1],
+                            points->m[2][index + steps + 1],
+                            points->m[0][index + steps],
+                            points->m[1][index + steps],
+                            points->m[2][index + steps],
+                            points->m[0][index],
+                            points->m[1][index],
+                            points->m[2][index]);
+                          // }
+
+                          printf("\n\n%d %d %d\n", index, lat, longt);
+        printf("(%lf, %lf, %lf)\n(%lf, %lf, %lf)\n(%lf, %lf, %lf)\n",
+        points->m[0][index + steps + 1],
+                           points->m[1][index + steps + 1],
+                           points->m[2][index + steps + 1],
+                           points->m[0][index],
+                           points->m[1][index],
+                           points->m[2][index],
+                           points->m[0][index + 1],
+                           points->m[1][index + 1],
+                           points->m[2][index + 1]);
+
+       printf("\n\n(%lf, %lf, %lf)\n(%lf, %lf, %lf)\n(%lf, %lf, %lf)\n",
+       points->m[0][index + steps + 1],
                           points->m[1][index + steps + 1],
                           points->m[2][index + steps + 1],
                           points->m[0][index + steps],
@@ -199,8 +200,9 @@ void add_sphere( struct matrix * edges,
                           points->m[0][index],
                           points->m[1][index],
                           points->m[2][index]);
+
+      }
     }
-  }
   free_matrix(points);
 }
 
@@ -240,9 +242,11 @@ struct matrix * generate_sphere(double cx, double cy, double cz,
       z = r * sin(M_PI * circ) *
         sin(2*M_PI * rot) + cz;
 
-      /* printf("rotation: %d\tcircle: %d\n", rotation, circle); */
-      /* printf("rot: %lf\tcirc: %lf\n", rot, circ); */
-      /* printf("sphere point: (%0.2f, %0.2f, %0.2f)\n\n", x, y, z); */
+      if ( (rotation == 1 && circle < 5) || (rotation == 0 && circle > 9) ) {
+        printf("rotation: %d\tcircle: %d\n", rotation, circle);
+        printf("rot: %lf\tcirc: %lf\n", rot, circ);
+        printf("sphere point: (%0.2f, %0.2f, %0.2f)\n\n", x, y, z);
+    }
       add_point(points, x, y, z);
     }
   }
